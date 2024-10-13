@@ -30,6 +30,19 @@ data "aws_ami" "ubuntu_task2" {
   }
 }
 
+data "aws_ami" "amazon-linux-task2" {
+
+  filter {
+    name = "name"
+    values = ["al2023-ami-2023.5.20241001.1-kernel-6.1-x86_64"]
+  }
+
+  filter {
+    name = "architecture"
+    values = ["x86_64"]
+  }
+}
+
 resource "aws_default_vpc" "default_vpc" {
   tags = {
     Name = "Default VPC"
@@ -144,4 +157,76 @@ resource "aws_vpc_security_group_ingress_rule" "ubuntu_ingress_icmp" {
   cidr_ipv4 = "0.0.0.0/0"
   from_port = -1
   to_port = -1
+}
+
+resource "aws_instance" "amazon_linux_server" {
+  ami           = data.aws_ami.amazon-linux-task2.id
+  instance_type = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.amazon_linux_sg.id]
+
+  tags = {
+    Name = "amazon-linux-task2"
+  }
+}
+
+resource "aws_security_group" "amazon_linux_sg" {
+  name = "amazon_linux_sg-sg"
+  tags = {
+    Name = "amazon_linux_sg-sg"
+  }
+  vpc_id = aws_default_vpc.default_vpc.id
+}
+
+resource "aws_vpc_security_group_ingress_rule" "amazon_linux_ingress_icmp" {
+  security_group_id = aws_security_group.amazon_linux_sg.id
+  ip_protocol = "icmp"
+  cidr_ipv4 = aws_default_vpc.default_vpc.cidr_block
+  from_port = -1
+  to_port = -1
+  tags = {
+    Name = "amazon-linux-sg-ingress_icmp"
+  }
+}
+
+resource "aws_vpc_security_group_egress_rule" "amazon_linux_allowed_egress_rule" {
+  security_group_id = aws_security_group.amazon_linux_sg.id
+  ip_protocol = "-1"
+  cidr_ipv4 = aws_default_vpc.default_vpc.cidr_block
+  tags = {
+    Name = "amazon-linux-sg-egress_all"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "amazon_linux_ingress_tcp80" {
+  security_group_id = aws_security_group.amazon_linux_sg.id
+  description = "Allow Port 80:80 tcp ingress"
+  ip_protocol = "tcp"
+  from_port = 80
+  to_port = 80
+  cidr_ipv4 = aws_default_vpc.default_vpc.cidr_block
+  tags = {
+    Name = "amazon_linux_ingress_tcp80"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "amazon_linux_ingress_tcp22" {
+  security_group_id = aws_security_group.amazon_linux_sg.id
+  ip_protocol = "tcp"
+  from_port = 22
+  to_port = 22
+  cidr_ipv4 = aws_default_vpc.default_vpc.cidr_block
+  tags = {
+    Name = "amazon_linux_ingress_tcp22"
+  }
+}
+
+resource "aws_vpc_security_group_ingress_rule" "amazon_linux_ingress_tcp443" {
+  security_group_id = aws_security_group.amazon_linux_sg.id
+  ip_protocol = "tcp"
+  from_port = 443
+  to_port = 443
+  cidr_ipv4 = aws_default_vpc.default_vpc.cidr_block
+  tags = {
+    Name = "amazon-linux-sg-ingress-tcp443"
+  }
 }
