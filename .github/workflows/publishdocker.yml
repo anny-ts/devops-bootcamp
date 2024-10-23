@@ -20,7 +20,9 @@ jobs:
           java-version: '21'
           cache: 'maven'
       - name: Build with maven
-        run: mvn clean package --file pom.xml
+        run: |
+          cd task3
+          mvn clean package --file pom.xml  
 
       - name: Set up Docker BuildX
         uses: docker/setup-buildx-action@v3
@@ -33,13 +35,14 @@ jobs:
 
       - name: Get CURRENT_POM_VERSION
         run: |
+          cd task3
           CURRENT_POM_VERSION=$(mvn help:evacuate -Dexpression=project.version -q -DforceStdout)
           echo "CURRENT_POM_VERSION=$CURRENT_POM_VERSION" >> $GITHUB_ENV
 
       - name: Build and Push Docker image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: task3
           push: 'true'
           tags: |
             annatsiunchik/devops-bootcamp:latest
